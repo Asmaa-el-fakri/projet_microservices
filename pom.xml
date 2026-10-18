@@ -27,6 +27,7 @@
         <module>services/customer-service</module>
         <module>services/gateway-api</module>
         <module>services/discovery-serveur</module>
+        <module>services/event-service</module>
     </modules>
 
     <dependencyManagement>
