@@ -40,5 +40,5 @@ Démarrer dans cet ordre :
 2. discovery-serveur
 3. customer-service
 4. gateway-api
-
+  - `step-05-openfeign` : TP4, communication synchrone booking-service → event-service avec OpenFeign
 Vérifier ensuite `http://localhost:8761` (services UP), puis `http://localhost:8080/api/customers`.
