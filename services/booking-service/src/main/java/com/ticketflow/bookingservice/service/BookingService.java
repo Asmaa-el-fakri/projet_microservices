@@ -6,6 +6,7 @@ import com.ticketflow.bookingservice.dto.BookingRequest;
 import com.ticketflow.bookingservice.entities.Booking;
 import com.ticketflow.bookingservice.repos.BookingRepo;
 import feign.FeignException;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,11 +39,21 @@ public class BookingService {
     private EventView fetchEvent(Long eventId) {
         try {
             return eventClient.getById(eventId);
-        } catch (FeignException.NotFound e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
-                    "Événement " + eventId + " introuvable");
-        } catch (FeignException e) {
-            log.warn("Appel à event-service en échec : status={}", e.status());
+        } catch (RuntimeException e) {
+            // Le circuit breaker enveloppe l'erreur d'origine (NoFallbackAvailableException) :
+            // on remonte la chaîne des causes pour retrouver la vraie exception.
+            for (Throwable t = e; t != null; t = t.getCause()) {
+                if (t instanceof FeignException.NotFound) {
+                    throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+                            "Événement " + eventId + " introuvable");
+                }
+                if (t instanceof CallNotPermittedException) {
+                    log.warn("Circuit ouvert : appel à event-service refusé");
+                    throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
+                            "event-service est temporairement indisponible (circuit ouvert)");
+                }
+            }
+            log.warn("Appel à event-service en échec : {}", e.toString());
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
                     "event-service est indisponible");
         }
