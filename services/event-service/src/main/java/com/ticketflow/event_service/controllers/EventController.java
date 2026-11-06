@@ -27,7 +27,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-
+import com.ticketflow.event_service.entities.EventStatus;
+import org.springframework.web.bind.annotation.PutMapping;
 @RestController
 @RequestMapping("/api/events")
 public class EventController {
@@ -106,6 +107,35 @@ public class EventController {
     @PostMapping("/{id}/publish")
     EventResponse publish(@PathVariable Long id) {
         return EventResponse.from(service.publish(id));
+    }
+    @PutMapping("/{id}")
+    EventResponse update(@PathVariable Long id, @Valid @RequestBody EventRequest request) {
+        return EventResponse.from(service.update(id, request));
+    }
+
+    @PostMapping("/{id}/close")
+    EventResponse close(@PathVariable Long id) {
+        return EventResponse.from(service.close(id));
+    }
+
+    @PostMapping("/{id}/archive")
+    EventResponse archive(@PathVariable Long id) {
+        return EventResponse.from(service.archive(id));
+    }
+
+    // Vue de gestion : tous les statuts, brouillons compris (sera réservée aux organisateurs)
+    @GetMapping("/manage")
+    PagedModel<EventResponse> manage(@RequestParam(required = false) EventStatus status,
+                                     @RequestParam(defaultValue = "0") int page,
+                                     @RequestParam(defaultValue = "10") int size) {
+        PageRequest pageable = PageRequest.of(Math.max(page, 0),
+                Math.min(Math.max(size, 1), maxPageSize), Sort.by("createdAt").descending().and(Sort.by("id")));
+        return new PagedModel<>(service.listForManagement(status, pageable).map(EventResponse::from));
+    }
+
+    @GetMapping("/manage/{id}")
+    EventResponse manageGet(@PathVariable Long id) {
+        return EventResponse.from(service.getForManagement(id));
     }
 
     private static ResponseStatusException badRequest(String message) {
