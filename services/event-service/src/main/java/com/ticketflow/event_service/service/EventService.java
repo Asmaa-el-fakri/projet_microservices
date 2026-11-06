@@ -31,6 +31,10 @@ public class EventService {
     public Page<Event> listPublished(Pageable pageable) {
         return repo.findByStatus(EventStatus.PUBLISHED, pageable);
     }
+    @Transactional(readOnly = true)
+    public Page<Event> search(EventSearchCriteria criteria, Pageable pageable) {
+        return repo.findAll(EventSpecifications.from(criteria), pageable);
+    }
 
     @Transactional(readOnly = true)
     public Event getPublished(Long id) {
