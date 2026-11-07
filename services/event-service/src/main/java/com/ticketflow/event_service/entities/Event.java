@@ -10,6 +10,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.Instant;
+import com.ticketflow.event_service.exceptions.EventStateException;
 
 @Entity
 @Table(name = "events")
@@ -68,6 +69,13 @@ public class Event {
 
     public void update(String title, String summary, Instant eventDate, String city,
                        String venue, String category, BigDecimal price, int capacity) {
+        if (status == EventStatus.CLOSED || status == EventStatus.ARCHIVED) {
+            throw new EventStateException("Un événement " + status + " ne peut plus être modifié");
+        }
+        if (status == EventStatus.PUBLISHED && capacity < this.capacity) {
+            throw new EventStateException(
+                    "La capacité d'un événement publié ne peut pas diminuer (des places peuvent être vendues)");
+        }
         this.title = title;
         this.summary = summary;
         this.eventDate = eventDate;
@@ -78,8 +86,29 @@ public class Event {
         this.capacity = capacity;
     }
 
-    public void publish() { this.status = EventStatus.PUBLISHED; }
-    public void close() { this.status = EventStatus.CLOSED; }
+    public void publish() {
+        requireStatus("publier", EventStatus.DRAFT);
+        this.status = EventStatus.PUBLISHED;
+    }
+
+    public void close() {
+        requireStatus("clôturer", EventStatus.PUBLISHED);
+        this.status = EventStatus.CLOSED;
+    }
+
+    public void archive() {
+        requireStatus("archiver", EventStatus.DRAFT, EventStatus.CLOSED);
+        this.status = EventStatus.ARCHIVED;
+    }
+
+    private void requireStatus(String action, EventStatus... allowed) {
+        for (EventStatus s : allowed) {
+            if (status == s) {
+                return;
+            }
+        }
+        throw new EventStateException("Impossible de " + action + " un événement " + status);
+    }
 
     public Long getId() { return id; }
     public String getTitle() { return title; }

@@ -33,17 +33,63 @@ public class EventService {
     }
 
     @Transactional(readOnly = true)
+    public Page<Event> search(EventSearchCriteria criteria, Pageable pageable) {
+        return repo.findAll(EventSpecifications.from(criteria), pageable);
+    }
+
+    @Transactional(readOnly = true)
     public Event getPublished(Long id) {
         return repo.findById(id)
                 .filter(e -> e.getStatus() == EventStatus.PUBLISHED)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Event not found"));
+                .orElseThrow(() -> notFound());
+    }
+
+    // --- gestion (tous statuts) ---
+
+    @Transactional(readOnly = true)
+    public Event getForManagement(Long id) {
+        return find(id);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Event> listForManagement(EventStatus status, Pageable pageable) {
+        return status == null ? repo.findAll(pageable) : repo.findByStatus(status, pageable);
+    }
+
+    @Transactional
+    public Event update(Long id, EventRequest r) {
+        Event event = find(id);
+        event.update(r.title(), r.summary(), r.eventDate(), r.city(),
+                r.venue(), r.category(), r.price(), r.capacity());
+        return event;
     }
 
     @Transactional
     public Event publish(Long id) {
-        Event event = repo.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Event not found"));
+        Event event = find(id);
         event.publish();
         return event;
+    }
+
+    @Transactional
+    public Event close(Long id) {
+        Event event = find(id);
+        event.close();
+        return event;
+    }
+
+    @Transactional
+    public Event archive(Long id) {
+        Event event = find(id);
+        event.archive();
+        return event;
+    }
+
+    private Event find(Long id) {
+        return repo.findById(id).orElseThrow(() -> notFound());
+    }
+
+    private static ResponseStatusException notFound() {
+        return new ResponseStatusException(HttpStatus.NOT_FOUND, "Event not found");
     }
 }
