@@ -50,7 +50,8 @@ public class Event {
 
     @Column(nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
-
+    @Column(length = 100)
+    private String organizerId; // "sub" du jeton Keycloak de l'organisateur
     protected Event() {
         // required by JPA
     }
@@ -121,4 +122,7 @@ public class Event {
     public int getCapacity() { return capacity; }
     public EventStatus getStatus() { return status; }
     public Instant getCreatedAt() { return createdAt; }
+    public void assignOrganizer(String organizerId) { this.organizerId = organizerId; }
+    public String getOrganizerId() { return organizerId; }
+    public boolean isOwnedBy(String subject) { return organizerId != null && organizerId.equals(subject); }
 }

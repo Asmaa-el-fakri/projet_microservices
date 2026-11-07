@@ -2,6 +2,7 @@ package com.ticketflow.event_service.controllers;
 
 import com.ticketflow.event_service.dto.EventRequest;
 import com.ticketflow.event_service.dto.EventResponse;
+import com.ticketflow.event_service.entities.EventStatus;
 import com.ticketflow.event_service.service.EventSearchCriteria;
 import com.ticketflow.event_service.service.EventService;
 import jakarta.validation.Valid;
@@ -18,17 +19,20 @@ import org.springframework.data.web.PagedModel;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-import com.ticketflow.event_service.entities.EventStatus;
-import org.springframework.web.bind.annotation.PutMapping;
+
 @RestController
 @RequestMapping("/api/events")
 public class EventController {
@@ -44,13 +48,7 @@ public class EventController {
         this.maxPageSize = maxPageSize;
     }
 
-    @PostMapping
-    ResponseEntity<EventResponse> create(@Valid @RequestBody EventRequest request) {
-        EventResponse created = EventResponse.from(service.create(request));
-        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
-                .path("/{id}").buildAndExpand(created.id()).toUri();
-        return ResponseEntity.created(location).body(created);
-    }
+    // ---------- public ----------
 
     @GetMapping
     PagedModel<EventResponse> list(
@@ -104,38 +102,61 @@ public class EventController {
         return EventResponse.from(service.getPublished(id));
     }
 
-    @PostMapping("/{id}/publish")
-    EventResponse publish(@PathVariable Long id) {
-        return EventResponse.from(service.publish(id));
+    // ---------- gestion : ORGANIZER, sur ses propres événements ----------
+
+    @PostMapping
+    @PreAuthorize("hasRole('ORGANIZER')")
+    ResponseEntity<EventResponse> create(@Valid @RequestBody EventRequest request,
+                                         @AuthenticationPrincipal Jwt jwt) {
+        EventResponse created = EventResponse.from(service.create(request, jwt.getSubject()));
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}").buildAndExpand(created.id()).toUri();
+        return ResponseEntity.created(location).body(created);
     }
+
     @PutMapping("/{id}")
-    EventResponse update(@PathVariable Long id, @Valid @RequestBody EventRequest request) {
-        return EventResponse.from(service.update(id, request));
+    @PreAuthorize("hasRole('ORGANIZER')")
+    EventResponse update(@PathVariable Long id, @Valid @RequestBody EventRequest request,
+                         @AuthenticationPrincipal Jwt jwt) {
+        return EventResponse.from(service.update(id, request, jwt.getSubject()));
+    }
+
+    @PostMapping("/{id}/publish")
+    @PreAuthorize("hasRole('ORGANIZER')")
+    EventResponse publish(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
+        return EventResponse.from(service.publish(id, jwt.getSubject()));
     }
 
     @PostMapping("/{id}/close")
-    EventResponse close(@PathVariable Long id) {
-        return EventResponse.from(service.close(id));
+    @PreAuthorize("hasRole('ORGANIZER')")
+    EventResponse close(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
+        return EventResponse.from(service.close(id, jwt.getSubject()));
     }
 
     @PostMapping("/{id}/archive")
-    EventResponse archive(@PathVariable Long id) {
-        return EventResponse.from(service.archive(id));
+    @PreAuthorize("hasRole('ORGANIZER')")
+    EventResponse archive(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
+        return EventResponse.from(service.archive(id, jwt.getSubject()));
     }
 
-    // Vue de gestion : tous les statuts, brouillons compris (sera réservée aux organisateurs)
+    // Vue de gestion : mes événements, tous statuts (brouillons compris)
     @GetMapping("/manage")
+    @PreAuthorize("hasRole('ORGANIZER')")
     PagedModel<EventResponse> manage(@RequestParam(required = false) EventStatus status,
                                      @RequestParam(defaultValue = "0") int page,
-                                     @RequestParam(defaultValue = "10") int size) {
+                                     @RequestParam(defaultValue = "10") int size,
+                                     @AuthenticationPrincipal Jwt jwt) {
         PageRequest pageable = PageRequest.of(Math.max(page, 0),
-                Math.min(Math.max(size, 1), maxPageSize), Sort.by("createdAt").descending().and(Sort.by("id")));
-        return new PagedModel<>(service.listForManagement(status, pageable).map(EventResponse::from));
+                Math.min(Math.max(size, 1), maxPageSize),
+                Sort.by("createdAt").descending().and(Sort.by("id")));
+        return new PagedModel<>(service.listForManagement(jwt.getSubject(), status, pageable)
+                .map(EventResponse::from));
     }
 
     @GetMapping("/manage/{id}")
-    EventResponse manageGet(@PathVariable Long id) {
-        return EventResponse.from(service.getForManagement(id));
+    @PreAuthorize("hasRole('ORGANIZER')")
+    EventResponse manageGet(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
+        return EventResponse.from(service.getForManagement(id, jwt.getSubject()));
     }
 
     private static ResponseStatusException badRequest(String message) {
