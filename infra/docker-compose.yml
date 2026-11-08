@@ -4,6 +4,13 @@ services:
       context: ..
       dockerfile: services/customer-service/Dockerfile
     container_name: customer-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      CONFIG_SERVER_URL: "http://host.docker.internal:8888"
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-ticketflow_dev}
     ports:
       - "8081:8081"
 
