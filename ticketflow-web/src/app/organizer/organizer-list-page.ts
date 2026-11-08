@@ -68,7 +68,7 @@ type Action = 'publish' | 'close' | 'archive';
                   <th scope="row">{{ e.title }}</th>
                   <td>{{ e.eventDate | date: 'dd/MM/yyyy HH:mm' }}</td>
                   <td>{{ e.city }}</td>
-                  <td>{{ e.price === 0 ? 'Gratuit' : (e.price | number: '1.0-2') }}</td>
+                  <td>{{ e.price === 0 ? 'Gratuit' : (e.price | number: '1.0-2') + ' MAD' }}</td>
                   <td>{{ e.capacity }}</td>
                   <td>{{ label(e.status) }}</td>
                   <td class="actions">
