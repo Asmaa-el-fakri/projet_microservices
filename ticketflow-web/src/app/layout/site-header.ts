@@ -12,6 +12,9 @@ import { AuthService } from '../auth/auth.service';
         <a routerLink="/events" routerLinkActive="active">Événements</a>
         @if (auth.authenticated()) {
           <a routerLink="/profile" routerLinkActive="active">Mon profil</a>
+          @if (auth.hasRole('ORGANIZER')) {
+            <a routerLink="/organizer" routerLinkActive="active">Mes événements</a>
+          }
         }
       </nav>
       <div class="user">
