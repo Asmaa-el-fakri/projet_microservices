@@ -36,7 +36,7 @@ type LoadError = 'notfound' | 'unreachable' | 'other';
             <dt>Lieu</dt>
             <dd>{{ e.venue }}, {{ e.city }}</dd>
             <dt>Prix</dt>
-            <dd>{{ e.price === 0 ? 'Gratuit' : (e.price | number: '1.0-2') }}</dd>
+            <dd>{{ e.price === 0 ? 'Gratuit' : (e.price | number: '1.0-2') + ' MAD' }}</dd>
             <dt>Capacité</dt>
             <dd>{{ e.capacity }} places</dd>
           </dl>

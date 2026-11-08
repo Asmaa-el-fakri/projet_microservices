@@ -56,7 +56,7 @@ import { EventService } from './event.service';
 
         <div class="field">
           <label for="sort">Trier par</label>
-          <select id="sort" name="sort" [(ngModel)]="sort">
+          <select id="sort" name="sort" [(ngModel)]="sort" (ngModelChange)="onSubmit()">
             <option value="eventDate">Date</option>
             <option value="price">Prix</option>
             <option value="title">Titre</option>
@@ -65,7 +65,7 @@ import { EventService } from './event.service';
 
         <div class="field">
           <label for="direction">Ordre</label>
-          <select id="direction" name="direction" [(ngModel)]="direction">
+          <select id="direction" name="direction" [(ngModel)]="direction" (ngModelChange)="onSubmit()">
             <option value="asc">Croissant</option>
             <option value="desc">Décroissant</option>
           </select>
@@ -73,7 +73,7 @@ import { EventService } from './event.service';
 
         <div class="field">
           <label for="size">Par page</label>
-          <select id="size" name="size" [(ngModel)]="size">
+          <select id="size" name="size" [(ngModel)]="size" (ngModelChange)="onSubmit()">
             <option [ngValue]="3">3</option>
             <option [ngValue]="6">6</option>
             <option [ngValue]="12">12</option>
@@ -128,7 +128,7 @@ import { EventService } from './event.service';
             </p>
 
             <p class="price">
-              {{ e.price === 0 ? 'Gratuit' : (e.price | number: '1.0-2') }}
+              {{ e.price === 0 ? 'Gratuit' : (e.price | number: '1.0-2') + ' MAD' }}
             </p>
           </li>
         }
