@@ -1,3 +1,7 @@
 **/target
 .git
 .idea
+**/node_modules
+ticketflow-web/dist
+ticketflow-web/.angular
+backup-keycloak
