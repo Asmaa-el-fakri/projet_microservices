@@ -48,19 +48,19 @@ type Action = 'publish' | 'close' | 'archive';
       }
 
       @if (events().length > 0) {
-        <div class="table-wrap">
+        <div class="table-wrap" role="region" aria-label="Tableau de mes événements" tabindex="0">
           <table>
             <caption class="sr-only">Liste de mes événements</caption>
             <thead>
-              <tr>
-                <th scope="col">Titre</th>
-                <th scope="col">Date</th>
-                <th scope="col">Ville</th>
-                <th scope="col">Prix</th>
-                <th scope="col">Capacité</th>
-                <th scope="col">Statut</th>
-                <th scope="col">Actions</th>
-              </tr>
+            <tr>
+              <th scope="col">Titre</th>
+              <th scope="col">Date</th>
+              <th scope="col">Ville</th>
+              <th scope="col">Prix</th>
+              <th scope="col">Capacité</th>
+              <th scope="col">Statut</th>
+              <th scope="col">Actions</th>
+            </tr>
             </thead>
             <tbody>
               @for (e of events(); track e.id) {
