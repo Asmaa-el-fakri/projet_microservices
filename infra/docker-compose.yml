@@ -7,6 +7,21 @@ services:
     ports:
       - "8081:8081"
 
+  event-service:
+    build:
+      context: ..
+      dockerfile: services/event-service/Dockerfile
+    container_name: event-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      CONFIG_SERVER_URL: "http://host.docker.internal:8888"
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-ticketflow_dev}
+    ports:
+      - "8082:8082"
+
   keycloak:
     image: quay.io/keycloak/keycloak:26.0.7
     container_name: keycloak
@@ -19,3 +34,23 @@ services:
       - "8180:8180"
     volumes:
       - ./keycloak:/opt/keycloak/data/import:ro
+
+  postgres:
+    image: postgres:17
+    container_name: ticketflow-postgres
+    environment:
+      POSTGRES_USER: ticketflow
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ticketflow_dev}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ticketflow"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  postgres-data:

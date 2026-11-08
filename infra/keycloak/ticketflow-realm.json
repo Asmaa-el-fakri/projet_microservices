@@ -39,6 +39,7 @@
   ],
   "users": [
     {
+      "id": "00000000-0000-4000-8000-000000000001",
       "username": "client1",
       "email": "client1@ticketflow.test",
       "emailVerified": true,
@@ -49,6 +50,7 @@
       "realmRoles": ["default-roles-ticketflow", "CLIENT"]
     },
     {
+      "id": "00000000-0000-4000-8000-000000000002",
       "username": "organizer1",
       "email": "organizer1@ticketflow.test",
       "emailVerified": true,
@@ -59,16 +61,7 @@
       "realmRoles": ["default-roles-ticketflow", "ORGANIZER"]
     },
     {
-      "username": "organizer2",
-      "email": "organizer2@ticketflow.test",
-      "emailVerified": true,
-      "firstName": "Organisateur",
-      "lastName": "Deux",
-      "enabled": true,
-      "credentials": [{ "type": "password", "value": "organizer234", "temporary": false }],
-      "realmRoles": ["default-roles-ticketflow", "ORGANIZER"]
-    },
-    {
+      "id": "00000000-0000-4000-8000-000000000003",
       "username": "organizer2",
       "email": "organizer2@ticketflow.test",
       "emailVerified": true,
@@ -79,6 +72,7 @@
       "realmRoles": ["default-roles-ticketflow", "ORGANIZER"]
     },
     {
+      "id": "00000000-0000-4000-8000-000000000004",
       "username": "admin1",
       "email": "admin1@ticketflow.test",
       "emailVerified": true,
