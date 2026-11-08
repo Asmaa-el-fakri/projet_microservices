@@ -4,6 +4,11 @@ spring:
   cloud:
     config:
       enabled: false
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8180/realms/ticketflow
   jpa:
     open-in-view: false
     hibernate:

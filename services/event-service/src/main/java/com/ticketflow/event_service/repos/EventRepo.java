@@ -12,4 +12,8 @@ import org.springframework.stereotype.Repository;
 public interface EventRepo extends JpaRepository<Event, Long>, JpaSpecificationExecutor<Event> {
 
     Page<Event> findByStatus(EventStatus status, Pageable pageable);
+
+    Page<Event> findByOrganizerId(String organizerId, Pageable pageable);
+
+    Page<Event> findByOrganizerIdAndStatus(String organizerId, EventStatus status, Pageable pageable);
 }

@@ -1,16 +1,22 @@
 #!/usr/bin/env bash
-# Cree et publie des evenements de test via le Gateway.
-# Prerequis : config-server, discovery-server, event-service et gateway-api demarres.
+# Cree et publie des evenements de test via le Gateway (compte organisateur de demonstration).
 API=${API:-http://localhost:8080/api/events}
+KEYCLOAK=${KEYCLOAK:-http://localhost:8180}
+
+TOKEN=$(curl -s -X POST "$KEYCLOAK/realms/ticketflow/protocol/openid-connect/token" \
+  -d grant_type=password -d client_id=ticketflow-web \
+  -d username=organizer1 -d password=organizer123 \
+  | sed -E 's/.*"access_token":"([^"]+)".*/\1/')
 
 create_and_publish() {
   local out code body id
-  out=$(curl -s -w $'\n%{http_code}' -X POST "$API" -H "Content-Type: application/json" --data "$1")
+  out=$(curl -s -w $'\n%{http_code}' -X POST "$API" -H "Authorization: Bearer $TOKEN" \
+    -H "Content-Type: application/json" --data "$1")
   code=${out##*$'\n'}
   body=${out%$'\n'*}
   if [[ "$code" == "201" ]]; then
     id=$(echo "$body" | sed -E 's/.*"id":([0-9]+).*/\1/')
-    curl -s -o /dev/null -X POST "$API/$id/publish"
+    curl -s -o /dev/null -X POST "$API/$id/publish" -H "Authorization: Bearer $TOKEN"
     echo "Evenement $id cree et publie"
   else
     echo "Echec (HTTP $code) : $body"
