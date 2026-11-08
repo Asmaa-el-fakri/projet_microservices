@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, Injector, OnInit, afterNextRender, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ProfileService } from './profile.service';
 
@@ -23,20 +23,23 @@ import { ProfileService } from './profile.service';
         <form (ngSubmit)="save()" aria-label="Modifier mon profil">
           <div class="field">
             <label for="email">Email</label>
-            <input id="email" name="email" type="email" [value]="email()" disabled />
-            <small>L'email ne peut pas être modifié ici.</small>
+            <input id="email" name="email" type="email" [value]="email()" disabled
+                   autocomplete="email" aria-describedby="email-hint" />
+            <small id="email-hint">L'email ne peut pas être modifié ici.</small>
           </div>
           <div class="field">
             <label for="firstName">Prénom</label>
-            <input id="firstName" name="firstName" type="text" required [(ngModel)]="firstName" />
+            <input id="firstName" name="firstName" type="text" required
+                   autocomplete="given-name" [(ngModel)]="firstName" />
           </div>
           <div class="field">
             <label for="lastName">Nom</label>
-            <input id="lastName" name="lastName" type="text" required [(ngModel)]="lastName" />
+            <input id="lastName" name="lastName" type="text" required
+                   autocomplete="family-name" [(ngModel)]="lastName" />
           </div>
           <div class="field">
             <label for="phone">Téléphone</label>
-            <input id="phone" name="phone" type="tel" [(ngModel)]="phone" />
+            <input id="phone" name="phone" type="tel" autocomplete="tel" [(ngModel)]="phone" />
           </div>
           <button type="submit" [disabled]="saving()">Enregistrer</button>
         </form>
@@ -44,13 +47,13 @@ import { ProfileService } from './profile.service';
         <section class="danger" aria-labelledby="close-title">
           <h2 id="close-title">Fermer mon compte</h2>
           @if (closureSent()) {
-            <p role="status">Votre demande de fermeture a été enregistrée.</p>
+            <p id="closure-msg" tabindex="-1" role="status">Votre demande de fermeture a été enregistrée.</p>
           } @else if (confirmingClose()) {
             <p>Voulez-vous vraiment demander la fermeture de votre compte ?</p>
             <button type="button" class="warn" (click)="confirmClose()">Oui, fermer mon compte</button>
-            <button type="button" class="secondary" (click)="confirmingClose.set(false)">Annuler</button>
+            <button type="button" id="cancel-close" class="secondary" (click)="cancelClose()">Annuler</button>
           } @else {
-            <button type="button" class="warn" (click)="confirmingClose.set(true)">
+            <button type="button" id="ask-close" class="warn" (click)="askClose()">
               Demander la fermeture de mon compte
             </button>
           }
@@ -76,6 +79,7 @@ import { ProfileService } from './profile.service';
 })
 export class ProfilePage implements OnInit {
   private readonly service = inject(ProfileService);
+  private readonly injector = inject(Injector);
 
   firstName = '';
   lastName = '';
@@ -131,15 +135,31 @@ export class ProfilePage implements OnInit {
       });
   }
 
+  askClose(): void {
+    this.confirmingClose.set(true);
+    this.focusLater('cancel-close');
+  }
+
+  cancelClose(): void {
+    this.confirmingClose.set(false);
+    this.focusLater('ask-close');
+  }
+
   confirmClose(): void {
     this.error.set(null);
     this.service.requestClosure().subscribe({
       next: () => {
         this.closureSent.set(true);
         this.confirmingClose.set(false);
+        this.focusLater('closure-msg');
       },
       error: (err: HttpErrorResponse) => this.error.set(this.messageFor(err)),
     });
+  }
+
+  // Remet le focus clavier sur un element qui vient d'apparaitre dans la page
+  private focusLater(id: string): void {
+    afterNextRender(() => document.getElementById(id)?.focus(), { injector: this.injector });
   }
 
   private messageFor(err: HttpErrorResponse): string {

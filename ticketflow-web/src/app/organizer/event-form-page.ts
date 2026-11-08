@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, Injector, OnInit, afterNextRender, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { EventStatus } from '../event/event.model';
@@ -26,18 +26,20 @@ function toLocalInput(iso: string): string {
       }
 
       @if (error()) {
-        <p class="error" role="alert">{{ error() }}</p>
+        <p id="form-error" class="error" role="alert" tabindex="-1">{{ error() }}</p>
       }
 
       @if (loading()) {
         <p aria-live="polite">Chargement…</p>
       } @else if (!loadFailed()) {
         @if (status() === 'PUBLISHED') {
-          <p class="hint">Événement publié : la capacité peut augmenter, mais pas diminuer.</p>
+          <p id="capacity-hint" class="hint">Événement publié : la capacité peut augmenter, mais pas diminuer.</p>
         }
         @if (readOnly()) {
           <p class="error" role="alert">Cet événement est clôturé ou archivé : il ne peut plus être modifié.</p>
         }
+
+        <p class="hint">Tous les champs sont obligatoires.</p>
 
         <form (ngSubmit)="save()" aria-label="Formulaire d'événement">
           <div class="field">
@@ -65,12 +67,13 @@ function toLocalInput(iso: string): string {
             <input id="category" name="category" type="text" required [(ngModel)]="category" [disabled]="readOnly()" />
           </div>
           <div class="field">
-            <label for="price">Prix (0 pour gratuit)</label>
+            <label for="price">Prix en MAD (0 pour gratuit)</label>
             <input id="price" name="price" type="number" min="0" step="0.01" required [(ngModel)]="price" [disabled]="readOnly()" />
           </div>
           <div class="field">
             <label for="capacity">Capacité (nombre de places)</label>
-            <input id="capacity" name="capacity" type="number" min="1" step="1" required [(ngModel)]="capacity" [disabled]="readOnly()" />
+            <input id="capacity" name="capacity" type="number" min="1" step="1" required [(ngModel)]="capacity" [disabled]="readOnly()"
+                   [attr.aria-describedby]="status() === 'PUBLISHED' ? 'capacity-hint' : null" />
           </div>
 
           <button type="submit" [disabled]="readOnly() || saving()">Enregistrer</button>
@@ -97,6 +100,7 @@ export class EventFormPage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly service = inject(OrganizerService);
+  private readonly injector = inject(Injector);
 
   private id: number | null = null;
 
@@ -156,7 +160,7 @@ export class EventFormPage implements OnInit {
     this.error.set(null);
     const problem = this.validate();
     if (problem) {
-      this.error.set(problem);
+      this.showError(problem);
       return;
     }
     const payload: EventPayload = {
@@ -174,10 +178,16 @@ export class EventFormPage implements OnInit {
     request.subscribe({
       next: () => this.router.navigate(['/organizer']),
       error: (err: HttpErrorResponse) => {
-        this.error.set(apiErrorMessage(err));
+        this.showError(apiErrorMessage(err));
         this.saving.set(false);
       },
     });
+  }
+
+  // Affiche l'erreur en haut de page et y place le focus clavier
+  private showError(message: string): void {
+    this.error.set(message);
+    afterNextRender(() => document.getElementById('form-error')?.focus(), { injector: this.injector });
   }
 
   private validate(): string | null {
