@@ -91,11 +91,16 @@ Compatibilité avec booking-service : `GET /api/events/{id}` reste public et ren
 | `GET /api/customers/me` | CLIENT authentifié | Mon profil ; créé à la première connexion à partir du jeton |
 | `PUT /api/customers/me` | CLIENT authentifié | Modifie `firstName`, `lastName`, `phone` (l'email n'est jamais modifiable) |
 | `POST /api/customers/me/close` | CLIENT authentifié | Enregistre une demande de fermeture de compte |
-| `GET /api/customers` | ADMIN | Liste des clients |
+| `GET /api/customers` | ADMIN | Liste des clients, avec `closureRequested` (demande de fermeture en attente) |
+| `PUT /api/customers/{id}` | ADMIN | Modifie un client |
 | `GET /api/customers/{id}` | ADMIN | Profil d'un client |
 | `POST /api/customers` | ADMIN | Crée un client |
 | `DELETE /api/customers/{id}` | ADMIN | Supprime un client |
+**Traitement d'une demande de fermeture de compte.** Le client demande la fermeture depuis « Mon profil » (`POST /me/close`). Il n'existe pas d'écran d'administration dans Angular : l'administrateur traite la demande par l'API et la console Keycloak.
 
+1. Lister les clients (`GET /api/customers`) et repérer ceux dont `closureRequested` vaut `true`.
+2. Supprimer le profil (`DELETE /api/customers/{id}`).
+3. Dans la console Keycloak (http://localhost:8180, realm `ticketflow`), ouvrir Users, puis désactiver ou supprimer l'utilisateur. Sans cette étape, le client pourrait se reconnecter et un nouveau profil serait recréé automatiquement.
 ## 4. Données
 
 Chaque service possède sa base et ses migrations Flyway (`V1__…sql`). Aucune jointure entre bases de services.
@@ -209,7 +214,7 @@ Placer les images dans `docs/img/` et les référencer ici :
 - Config Server, Eureka et Gateway se lancent depuis IntelliJ ; ils ne sont pas encore dans Docker Compose. Les conteneurs les joignent par `host.docker.internal`, et s'enregistrent dans Eureka avec le nom d'hôte `localhost` pour rester joignables depuis le Gateway lancé sur la machine.
 - Les scripts de démonstration utilisent le flux « mot de passe » de Keycloak (activé sur le client de démonstration). À désactiver hors démonstration.
 - Keycloak tourne en mode développement (HTTP, base interne) : ne pas utiliser tel quel en production.
-- La demande de fermeture de compte est enregistrée (`closure_requested`), son traitement n'est pas automatisé.
+- La demande de fermeture de compte est traitée à la main par un administrateur (API et console Keycloak) ; il n'y a pas d'écran d'administration dans Angular.
 - Catégories de billets et disponibilité (FR-003, FR-001 en partie) : dépendent du service de réservation (partie B), non réalisées ici.
 - Les appels OpenFeign de booking-service vers event-service passent sans jeton, car `GET /api/events/{id}` est public ; la méthode d'authentification des appels entre services reste à décider avec la partie B.
 - Description OpenAPI des API : non réalisée.

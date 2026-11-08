@@ -9,10 +9,11 @@ public record CustomerResponse(
         String lastName,
         String email,
         String phone,
+        boolean closureRequested,
         Instant createdAt) {
 
     public static CustomerResponse from(Customer c) {
         return new CustomerResponse(c.getId(), c.getFirstName(), c.getLastName(),
-                c.getEmail(), c.getPhone(), c.getCreatedAt());
+                c.getEmail(), c.getPhone(), c.isClosureRequested(), c.getCreatedAt());
     }
 }
