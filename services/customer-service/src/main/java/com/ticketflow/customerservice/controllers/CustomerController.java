@@ -2,11 +2,15 @@ package com.ticketflow.customerservice.controllers;
 
 import com.ticketflow.customerservice.dto.CustomerRequest;
 import com.ticketflow.customerservice.dto.CustomerResponse;
+import com.ticketflow.customerservice.dto.CustomerUpdateRequest;
 import com.ticketflow.customerservice.service.CustomerService;
 import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.List;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -27,7 +31,33 @@ public class CustomerController {
         this.service = service;
     }
 
+    // ========== FR-005 : Profil connecté ==========
+
+    @GetMapping("/me")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<CustomerResponse> getMe(@AuthenticationPrincipal Jwt jwt) {
+        return ResponseEntity.ok(CustomerResponse.from(service.getOrCreateProfile(jwt)));
+    }
+
+    @PutMapping("/me")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<CustomerResponse> updateMe(
+            @AuthenticationPrincipal Jwt jwt,
+            @Valid @RequestBody CustomerUpdateRequest request) {
+        return ResponseEntity.ok(CustomerResponse.from(service.updateMyProfile(jwt, request)));
+    }
+
+    @PostMapping("/me/close")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Void> closeMe(@AuthenticationPrincipal Jwt jwt) {
+        service.requestClosure(jwt);
+        return ResponseEntity.accepted().build();
+    }
+
+    // ========== Méthodes existantes (protégées) ==========
+
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     ResponseEntity<CustomerResponse> create(@Valid @RequestBody CustomerRequest request) {
         CustomerResponse created = CustomerResponse.from(service.create(request));
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
@@ -36,21 +66,25 @@ public class CustomerController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     CustomerResponse get(@PathVariable Long id) {
         return CustomerResponse.from(service.get(id));
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     List<CustomerResponse> list() {
         return service.list().stream().map(CustomerResponse::from).toList();
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     CustomerResponse update(@PathVariable Long id, @Valid @RequestBody CustomerRequest request) {
         return CustomerResponse.from(service.update(id, request));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     ResponseEntity<Void> delete(@PathVariable Long id) {
         service.delete(id);
         return ResponseEntity.noContent().build();

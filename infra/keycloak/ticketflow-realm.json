@@ -1,0 +1,86 @@
+{
+  "realm": "ticketflow",
+  "displayName": "TicketFlow",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": true,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "roles": {
+    "realm": [
+      { "name": "CLIENT", "description": "Client authentifie : reserve, consulte ses billets" },
+      { "name": "ORGANIZER", "description": "Organisateur : gere ses evenements" },
+      { "name": "ADMIN", "description": "Administrateur de la plateforme" }
+    ]
+  },
+  "groups": [
+    { "name": "clients", "path": "/clients", "realmRoles": ["CLIENT"] }
+  ],
+  "defaultGroups": ["/clients"],
+  "clients": [
+    {
+      "clientId": "ticketflow-web",
+      "name": "TicketFlow Web (Angular)",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "rootUrl": "http://localhost:4200",
+      "redirectUris": ["http://localhost:4200/*"],
+      "webOrigins": ["http://localhost:4200"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:4200/*"
+      }
+    }
+  ],
+  "users": [
+    {
+      "id": "00000000-0000-4000-8000-000000000001",
+      "username": "client1",
+      "email": "client1@ticketflow.test",
+      "emailVerified": true,
+      "firstName": "Client",
+      "lastName": "Test",
+      "enabled": true,
+      "credentials": [{ "type": "password", "value": "client123", "temporary": false }],
+      "realmRoles": ["default-roles-ticketflow", "CLIENT"]
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000002",
+      "username": "organizer1",
+      "email": "organizer1@ticketflow.test",
+      "emailVerified": true,
+      "firstName": "Organisateur",
+      "lastName": "Test",
+      "enabled": true,
+      "credentials": [{ "type": "password", "value": "organizer123", "temporary": false }],
+      "realmRoles": ["default-roles-ticketflow", "ORGANIZER"]
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000003",
+      "username": "organizer2",
+      "email": "organizer2@ticketflow.test",
+      "emailVerified": true,
+      "firstName": "Organizer",
+      "lastName": "asmaa",
+      "enabled": true,
+      "credentials": [{ "type": "password", "value": "organizer223", "temporary": false }],
+      "realmRoles": ["default-roles-ticketflow", "ORGANIZER"]
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000004",
+      "username": "admin1",
+      "email": "admin1@ticketflow.test",
+      "emailVerified": true,
+      "firstName": "Admin",
+      "lastName": "Test",
+      "enabled": true,
+      "credentials": [{ "type": "password", "value": "admin123", "temporary": false }],
+      "realmRoles": ["default-roles-ticketflow", "ADMIN"]
+    }
+  ]
+}
