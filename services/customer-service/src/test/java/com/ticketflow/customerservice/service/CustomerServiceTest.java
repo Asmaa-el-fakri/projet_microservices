@@ -24,6 +24,8 @@ class CustomerServiceTest {
 
     @Mock
     CustomerRepo repo;
+    @Mock
+    AuditService audit;
 
     @InjectMocks
     CustomerService service;
