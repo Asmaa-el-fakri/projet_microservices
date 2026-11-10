@@ -4,10 +4,12 @@ import com.ticketflow.paymentservice.dto.PaymentRequest;
 import com.ticketflow.paymentservice.dto.SimulationRequest.Outcome;
 import com.ticketflow.paymentservice.entities.Payment;
 import com.ticketflow.paymentservice.entities.PaymentStatus;
+import com.ticketflow.paymentservice.events.PaymentEvent;
 import com.ticketflow.paymentservice.exceptions.PaymentRuleException;
 import com.ticketflow.paymentservice.repos.PaymentRepo;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,11 +21,14 @@ public class PaymentService {
     private static final String DEFAULT_CURRENCY = "MAD";
 
     private final PaymentRepo repo;
+    private final ApplicationEventPublisher events;
     private final boolean simulationEnabled;
 
     public PaymentService(PaymentRepo repo,
+                          ApplicationEventPublisher events,
                           @Value("${ticketflow.payments.simulation-enabled:true}") boolean simulationEnabled) {
         this.repo = repo;
+        this.events = events;
         this.simulationEnabled = simulationEnabled;
     }
 
@@ -55,6 +60,8 @@ public class PaymentService {
             case FAILURE -> payment.fail();
             case CANCEL -> payment.cancel();
         }
+        // Publie apres le commit par KafkaPaymentEventPublisher
+        events.publishEvent(PaymentEvent.of(payment));
         return payment;
     }
 
