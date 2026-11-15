@@ -1,8 +1,16 @@
 spring:
   application:
     name: payment-service
+
   config:
     import: "configserver:${CONFIG_SERVER_URL:http://localhost:8888}"
+
   cloud:
     config:
       label: main
+
+  kafka:
+    bootstrap-servers: localhost:9094
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer

@@ -1,3 +1,4 @@
+
 package com.ticketflow.bookingservice.entities;
 
 import jakarta.persistence.Column;
@@ -8,6 +9,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+
 import java.math.BigDecimal;
 import java.time.Instant;
 
@@ -28,7 +30,8 @@ public class Booking {
     @Column(nullable = false)
     private int quantity;
 
-    // Renseignés au TP4 à partir d'event-service (prix figé au moment de la réservation)
+    // Renseignés au TP4 à partir d'event-service
+    // (prix figé au moment de la réservation)
     @Column(precision = 10, scale = 2)
     private BigDecimal unitPrice;
 
@@ -52,12 +55,42 @@ public class Booking {
         this.quantity = quantity;
     }
 
-    public Long getId() { return id; }
-    public Long getCustomerId() { return customerId; }
-    public Long getEventId() { return eventId; }
-    public int getQuantity() { return quantity; }
-    public BigDecimal getUnitPrice() { return unitPrice; }
-    public BigDecimal getTotalPrice() { return totalPrice; }
-    public BookingStatus getStatus() { return status; }
-    public Instant getCreatedAt() { return createdAt; }
+    public Long getId() {
+        return id;
+    }
+
+    public Long getCustomerId() {
+        return customerId;
+    }
+
+    public Long getEventId() {
+        return eventId;
+    }
+
+    public int getQuantity() {
+        return quantity;
+    }
+
+    public BigDecimal getUnitPrice() {
+        return unitPrice;
+    }
+
+    public BigDecimal getTotalPrice() {
+        return totalPrice;
+    }
+
+    public BookingStatus getStatus() {
+        return status;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    // Confirm booking only when payment is pending
+    public void confirm() {
+        if (this.status == BookingStatus.PENDING_PAYMENT) {
+            this.status = BookingStatus.CONFIRMED;
+        }
+    }
 }
